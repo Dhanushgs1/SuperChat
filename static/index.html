@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SuperChat</title>
+<style>
+:root{--bg:#f6f8fc;--card:#fff;--ink:#1f1f1f;--muted:#5f6368;--line:#e3e6ec;--accent:#0b57d0;--soft:#d3e3fd;--hover:#f2f6fc;--sel:#c2dbff;
+ --ok:#188038;--warn:#b06000;--bad:#d93025;--star:#f4b400;
+ --claude_code:#d97757;--cursor:#2b2f3a;--hermes:#7c3aed;--antigravity:#2563eb;--codex:#10a37f;--gemini:#4285f4;--other:#94a3b8}
+*{box-sizing:border-box}html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 "Segoe UI",system-ui,-apple-system,sans-serif;display:flex;flex-direction:column}
+header{display:flex;align-items:center;gap:12px;padding:8px 16px;height:60px;flex:none}
+.logo{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#6366f1,#ec4899);color:#fff;display:grid;place-items:center;font-weight:800}
+header h1{font-size:20px;margin:0;font-weight:500}
+#filter{flex:1;max-width:620px;margin-left:40px;border:0;background:#e9eef6;border-radius:24px;padding:11px 18px 11px 44px;font:inherit;font-size:15px;outline:none;
+ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' fill='none' stroke='%235f6368' stroke-width='2' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:16px center}
+#filter:focus{background-color:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.hright{margin-left:auto;display:flex;gap:8px;align-items:center}
+.pill{padding:5px 11px;border:1px solid var(--line);border-radius:99px;background:#fff;font-size:12.5px;color:var(--muted);cursor:pointer;white-space:nowrap}
+.app{flex:1;display:flex;min-height:0}
+aside{width:232px;flex:none;padding:4px 12px 12px 8px;display:flex;flex-direction:column;gap:2px}
+.nav{display:flex;align-items:center;gap:14px;padding:0 14px 0 22px;height:34px;border-radius:0 17px 17px 0;cursor:pointer;color:var(--ink);font-size:14px;user-select:none}
+.nav:hover{background:#e8ebf0}.nav.on{background:var(--soft);font-weight:700}
+.nav .c{margin-left:auto;font-size:12.5px;font-weight:600}
+.nav .ic{width:20px;text-align:center}
+.navsep{height:1px;background:var(--line);margin:8px 14px}
+.agentsel{margin:6px 14px;font:inherit;font-size:13px;border:1px solid var(--line);border-radius:8px;padding:6px 8px;background:#fff}
+.helpers{margin:2px 16px;font-size:12.5px;color:var(--muted);display:flex;gap:6px;align-items:center}
+.keys{margin:auto 14px 0;font-size:11.5px;color:var(--muted);line-height:1.7}
+kbd{font:11px ui-monospace,monospace;background:#fff;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 4px}
+.main{flex:1;display:flex;gap:12px;min-width:0;padding:0 16px 12px 0}
+.listp,.viewp{background:var(--card);border-radius:16px;display:flex;flex-direction:column;min-height:0;min-width:0}
+.listp{flex:0 0 46%}.viewp{flex:1}
+.lhead{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--line);font-size:13px;color:var(--muted);min-height:46px}
+.lhead b{color:var(--ink);font-size:15px}
+.lbody{overflow:auto;flex:1}
+.row{display:flex;align-items:center;gap:10px;padding:0 10px 0 12px;height:52px;border-bottom:1px solid #f1f3f4;cursor:pointer;position:relative;outline:none}
+.row:hover{box-shadow:inset 1px 0 0 #dadce0,inset -1px 0 0 #dadce0,0 1px 2px rgba(60,64,67,.3),0 1px 3px 1px rgba(60,64,67,.15);z-index:1}
+.row.sel{background:var(--sel)}.row.focus{box-shadow:inset 3px 0 0 var(--accent)}
+.star{border:0;background:none;font-size:18px;cursor:pointer;color:#bdc1c6;width:28px;height:28px;border-radius:50%;flex:none;line-height:1}
+.star:hover{background:#e8eaed}.star.on{color:var(--star)}
+.dot{width:8px;height:8px;border-radius:50%;flex:none}
+.rt{flex:1;min-width:0}.rt .t{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rt .m{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.when{font-size:12px;color:var(--muted);white-space:nowrap}
+.kb{font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:99px;background:#e6f4ea;color:var(--ok);white-space:nowrap}
+.hov{display:none;gap:2px;position:absolute;right:8px;background:inherit}
+.row:hover .hov,.row.focus .hov{display:flex}.row:hover .when,.row.focus .when{visibility:hidden}
+.ib{border:0;background:none;width:34px;height:34px;border-radius:50%;cursor:pointer;font-size:16px;color:var(--muted);display:grid;place-items:center}
+.ib:hover{background:#e8eaed;color:var(--ink)}
+.row .hov{background:#fff}.row.sel .hov{background:var(--sel)}
+.vhead{display:flex;align-items:center;gap:6px;padding:8px 12px 8px 18px;border-bottom:1px solid var(--line);min-height:52px}
+.vhead .t{font-size:17px;font-weight:500;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.back{display:none}#vacts{display:flex;gap:2px;flex:none}
+.vbody{overflow:auto;flex:1;padding:14px 18px;display:flex;flex-direction:column;gap:10px}
+.bub{padding:9px 13px;border-radius:14px;max-width:92%;overflow-wrap:anywhere;font-size:13.5px}
+.bub.user{align-self:flex-end;background:#e8f0fe}.bub.assistant{align-self:flex-start;background:#f1f3f4}
+.bub.tool{align-self:flex-start;background:none;border:1px dashed var(--line);color:var(--muted);font-size:12px;padding:3px 9px}
+.who{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:2px}
+.bub pre{background:#202124;color:#e8eaed;padding:8px 10px;border-radius:8px;overflow:auto;font-size:12px;white-space:pre}
+.bub code{background:rgba(0,0,0,.06);padding:1px 4px;border-radius:4px;font-size:.92em}.bub pre code{background:none}
+.kpanel{border-top:1px solid var(--line);padding:12px 16px;background:#fafbfd;border-radius:0 0 16px 16px;max-height:55%;overflow:auto}
+.kpanel h4{margin:0 0 8px;font-size:14px;display:flex;align-items:center;gap:8px}
+.kform{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+input,select,textarea{font:inherit;border:1px solid var(--line);border-radius:8px;padding:7px 10px;background:#fff;color:var(--ink)}
+.kform input{flex:1;min-width:130px}
+.btn{border:0;background:var(--accent);color:#fff;font-weight:600;padding:8px 18px;border-radius:20px;cursor:pointer;font-size:13.5px;white-space:nowrap}
+.btn.ghost{background:#fff;color:var(--accent);border:1px solid var(--line)}.btn.ok{background:var(--ok)}.btn.bad{background:#fff;color:var(--bad);border:1px solid #f5c2c0}
+.btn:disabled{opacity:.5;cursor:default}
+.kcard{border:1px solid var(--line);border-radius:12px;background:#fff;margin-top:10px}
+.kcard .kh{display:flex;gap:8px;align-items:center;padding:10px 12px;cursor:pointer}
+.kcard .kh .t{font-weight:600;flex:1;min-width:0}
+.kcard .kb2{padding:0 12px 12px;display:grid;gap:8px}
+.kcard label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:2px}
+.kcard textarea{width:100%;min-height:54px;resize:vertical}.kcard input,.kcard select{width:100%}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.sc{font-weight:800}.band-high{color:var(--ok)}.band-standard{color:var(--warn)}.band-low{color:var(--bad)}
+.st{font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;white-space:nowrap}
+.st-draft{background:#fef7e0;color:var(--warn)}.st-approved{background:#e6f4ea;color:var(--ok)}.st-submitted{background:#f3e8fd;color:#8430ce}
+.warn{font-size:12.5px;padding:7px 10px;border-radius:8px;background:#fef7e0;color:#7a4b00}
+.info{font-size:12.5px;padding:7px 10px;border-radius:8px;background:#e8f0fe;color:#174ea6}
+.ro{font-size:12px;background:#f8f9fa;border:1px solid var(--line);border-radius:8px;padding:7px 9px;white-space:pre-wrap;max-height:150px;overflow:auto}
+.empty{padding:48px 20px;text-align:center;color:var(--muted)}
+.toast{position:fixed;left:24px;bottom:24px;background:#323232;color:#fff;border-radius:6px;padding:12px 16px;display:flex;gap:18px;align-items:center;
+ box-shadow:0 3px 8px rgba(0,0,0,.3);z-index:50;font-size:14px;max-width:calc(100vw - 48px)}
+.toast button{border:0;background:none;color:#8ab4f8;font-weight:700;cursor:pointer;font-size:14px}
+.toast.err{background:#b3261e}
+.modal{position:fixed;inset:0;background:rgba(32,33,36,.5);display:grid;place-items:center;z-index:60;padding:16px}
+.modal .box{background:#fff;border-radius:16px;max-width:540px;padding:22px 24px;box-shadow:0 20px 50px rgba(0,0,0,.3)}
+.modal h3{margin:0 0 10px;font-weight:500;font-size:20px}.modal p,.modal li{color:#3c4043;font-size:14px}
+.acts{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap}
+.hidden{display:none!important}
+.spin{width:16px;height:16px;border:2px solid var(--line);border-top-color:var(--accent);border-radius:50%;display:inline-block;animation:s .8s linear infinite;vertical-align:middle}@keyframes s{to{transform:rotate(360deg)}}
+.sres{padding:10px 16px;border-bottom:1px solid #f1f3f4;cursor:pointer}.sres:hover{background:var(--hover)}.sres .t{font-weight:600}
+mark{background:#fde293;border-radius:2px}
+@media(max-width:900px){
+ header{height:auto;flex-wrap:wrap;padding:8px 12px}#filter{order:3;margin:6px 0 0;max-width:none;flex-basis:100%}
+ .app{flex-direction:column}aside{width:auto;flex-direction:row;overflow-x:auto;padding:4px 8px;gap:4px}
+ .nav{border-radius:17px;padding:0 12px;flex:none}.navsep,.keys,.helpers,.agentsel{display:none}
+ .main{padding:0 8px 8px}.listp{flex:1}
+ .viewp{position:fixed;inset:0;z-index:40;border-radius:0}.viewp.closed{display:none}
+ .back{display:grid}.hov{display:flex;position:static}.when{display:none}.row{height:auto;min-height:56px;padding:6px 8px}
+ .g2{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">S</div><h1>SuperChat</h1>
+  <input id="filter" placeholder="Filter chats by title or project  ( / )" autocomplete="off">
+  <div class="hright"><span class="pill" id="who" title="Your name on knowledge notes">👤 …</span><span class="pill" id="consent"></span></div>
+</header>
+<div class="app">
+  <aside>
+    <div class="nav on" data-view="all"><span class="ic">📥</span>All<span class="c" id="c-all"></span></div>
+    <div class="nav" data-view="kept"><span class="ic">⭐</span>Kept<span class="c" id="c-kept"></span></div>
+    <div class="nav" data-view="deleted"><span class="ic">🗑️</span>Deleted<span class="c" id="c-deleted"></span></div>
+    <div class="nav" data-view="search"><span class="ic">🔍</span>Search</div>
+    <div class="navsep"></div>
+    <div class="nav" data-view="knowledge"><span class="ic">✨</span>Knowledge<span class="c" id="c-knowledge"></span></div>
+    <div class="nav" data-view="activity"><span class="ic">🧾</span>Activity</div>
+    <div class="navsep"></div>
+    <select class="agentsel" id="agent"><option value="">All agents</option></select>
+    <label class="helpers"><input type="checkbox" id="helpers"> show helper chats</label>
+    <div class="keys"><kbd>j</kbd>/<kbd>k</kbd> move · <kbd>Enter</kbd> open<br><kbd>s</kbd> keep/unkeep · <kbd>#</kbd> delete<br><kbd>r</kbd> restore · <kbd>z</kbd> undo · <kbd>e</kbd> extract<br><kbd>/</kbd> filter · <kbd>Esc</kbd> close</div>
+  </aside>
+  <div class="main">
+    <section class="listp" id="listp"><div class="lhead" id="lhead"></div><div class="lbody" id="lbody"></div></section>
+    <section class="viewp closed" id="viewp"><div class="empty">Select a chat to read it.<br><br>⭐ Keep it, 🗑️ delete it, or ✨ extract the valuable knowledge from it.</div></section>
+  </div>
+</div>
+
+<div class="toast hidden" id="toast"><span id="tmsg"></span><button id="tundo">Undo</button></div>
+
+<div class="modal hidden" id="consentModal"><div class="box">
+  <h3>Send this chat to Claude?</h3>
+  <p><b>Extract valuable knowledge</b> sends this conversation to <b>Claude (Anthropic)</b> under your Claude Team plan. Passwords, keys, tokens, emails, phone numbers and IPs are masked first, and tool logs are cut to one line each. Claude runs with no tools, so it can only read and reply.</p>
+  <p>Only approved knowledge is saved to Obsidian. You review everything first.</p>
+  <div class="acts"><button class="btn ghost" id="cNo">Cancel</button><button class="btn" id="cYes">Allow and extract</button></div>
+</div></div>
+
+<div class="modal hidden" id="purgeModal"><div class="box">
+  <h3>Delete forever?</h3>
+  <p id="purgeTitle" style="font-weight:600"></p>
+  <p>This permanently removes the chat <b>from SuperChat</b>:</p>
+  <ul><li>It disappears from All, Kept and Deleted and will not come back when SuperChat scans for new chats.</li>
+      <li>Its unapproved knowledge drafts are deleted.</li></ul>
+  <p>This does <b>not</b> delete:</p>
+  <ul><li>The original Claude Code, Cursor, Codex, Gemini or Hermes chat files.</li>
+      <li>CASS's search index and its copy of the chat.</li>
+      <li>Knowledge you already approved (those notes stay in Obsidian; delete them there if needed).</li>
+      <li>Database backups in <code>superchat\data</code> and the audit log entry for this action.</li></ul>
+  <div class="acts"><button class="btn ghost" id="pNo">Cancel</button><button class="btn" style="background:var(--bad)" id="pYes">Delete forever</button></div>
+</div></div>
+
+<script>
+const AG={claude_code:"Claude Code",cursor:"Cursor",hermes:"Hermes",antigravity:"Antigravity",codex:"Codex",gemini:"Gemini"};
+const CATS={bug_solution:"Bug & solution",debugging:"Debugging",qa:"Question & answer",feedback:"Feedback & improvement",decision:"Technical decision",architecture:"Architecture",best_practice:"Best practice",unresolved:"Unresolved issue",progress:"Progress update"};
+const VIEWNAME={all:"All chats",kept:"Kept",deleted:"Deleted"};
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const esc=s=>(s??"").toString().replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const when=ms=>{if(!ms)return"";const d=new Date(ms),n=new Date();return d.toDateString()===n.toDateString()?d.toLocaleTimeString("en-IN",{hour:"numeric",minute:"2-digit"}):d.toLocaleDateString("en-IN",{day:"numeric",month:"short"})};
+async function get(u){const r=await fetch(u);const j=await r.json();if(!r.ok)throw new Error(j.error||r.status);return j}
+async function post(u,b){const r=await fetch(u,{method:"POST",headers:{"Content-Type":"application/json","X-SuperChat":"1"},body:JSON.stringify(b)});let j={};try{j=await r.json()}catch(e){}if(!r.ok)throw new Error(j.error||("HTTP "+r.status));return j}
+function md(t){const bl=[];t=t.replace(/```[^\n]*\n([\s\S]*?)```/g,(_,c)=>{bl.push(c);return`\u0000${bl.length-1}\u0000`});
+ t=esc(t).replace(/`([^`\n]+)`/g,"<code>$1</code>").replace(/\*\*([^*\n]+)\*\*/g,"<b>$1</b>").replace(/\n/g,"<br>");
+ return t.replace(/\u0000(\d+)\u0000/g,(_,i)=>`<pre><code>${esc(bl[+i])}</code></pre>`)}
+
+const S={view:"all",rows:[],counts:{all:0,kept:0,deleted:0},focus:-1,open:null,state:null,undo:null};
+
+// ---------------- state / header
+async function loadState(){S.state=await get("/api/state"+(helpersOn()?"?helpers=1":""));setCounts(S.state.counts);
+  $("#c-knowledge").textContent=S.state.drafts?S.state.drafts+" to review":(S.state.knowledge||"");
+  $("#who").textContent="👤 "+S.state.employee;
+  $("#consent").textContent=S.state.consent_claude?"🟢 Claude extraction on":"🔒 Claude extraction off";}
+function setCounts(c){S.counts=c;["all","kept","deleted"].forEach(k=>$("#c-"+k).textContent=c[k]||"");}
+$("#who").onclick=async()=>{const n=prompt("Your name (shown as contributor on knowledge notes):",S.state.employee);if(n){await post("/api/employee",{name:n});loadState()}};
+$("#consent").onclick=async()=>{if(S.state.consent_claude&&confirm("Turn off Claude extraction? You'll be asked again next time.")){await post("/api/consent",{value:false});loadState()}};
+const helpersOn=()=>$("#helpers").checked;
+Object.entries(AG).forEach(([k,v])=>$("#agent").insertAdjacentHTML("beforeend",`<option value="${k}">${v}</option>`));
+$("#agent").onchange=()=>loadList();$("#helpers").onchange=()=>{loadState();loadList()};
+let ft;$("#filter").oninput=()=>{clearTimeout(ft);ft=setTimeout(()=>S.view==="search"?null:loadList(),200)};
+$("#filter").onkeydown=e=>{if(e.key==="Enter"&&S.view==="search")doSearch();if(e.key==="Escape")$("#filter").blur()};
+
+// ---------------- navigation
+$$(".nav").forEach(n=>n.onclick=()=>go(n.dataset.view));
+function go(v){S.view=v;$$(".nav").forEach(n=>n.classList.toggle("on",n.dataset.view===v));closeView();
+  if(VIEWNAME[v])loadList();else if(v==="search")showSearch();else if(v==="knowledge")loadKnowledge();else if(v==="activity")loadActivity();}
+
+// ---------------- list
+async function loadList(keepFocusPath){const p=new URLSearchParams({view:S.view,agent:$("#agent").value,q:$("#filter").value});if(helpersOn())p.set("helpers","1");
+  const r=await get("/api/sessions?"+p);S.rows=r.sessions;setCounts(r.counts);
+  if(keepFocusPath){S.focus=S.rows.findIndex(x=>x.path===keepFocusPath)}else if(S.focus>=S.rows.length)S.focus=S.rows.length-1;
+  renderList();}
+function rowActions(s){
+  if(s.state==="deleted")return`<button class="ib" data-a="restore" title="Restore to All (r)">↩️</button><button class="ib" data-a="purge" title="Delete forever">❌</button>`;
+  return(s.state==="kept"?`<button class="ib" data-a="unkeep" title="Unkeep: move back to All (s)">↩️</button>`:`<button class="ib" data-a="keep" title="Keep (s)">⭐</button>`)+`<button class="ib" data-a="delete" title="Delete (#)">🗑️</button>`;}
+function renderList(){
+  const v=S.view,head=`<b>${VIEWNAME[v]}</b><span>${S.rows.length} chat${S.rows.length===1?"":"s"}</span>`+(v==="deleted"&&S.rows.length?`<span style="margin-left:auto">Deleted chats can be restored. Nothing here is erased unless you choose ❌ Delete forever.</span>`:"");
+  $("#lhead").innerHTML=head;
+  if(!S.rows.length){$("#lbody").innerHTML=`<div class="empty">${v==="kept"?"No kept chats yet.<br>Press ⭐ on any chat to keep it.":v==="deleted"?"Nothing in Deleted.":S.state&&S.state.refreshing?'<span class="spin"></span> Finding chats…':"No chats here."}</div>`;return}
+  $("#lbody").innerHTML=S.rows.map((s,i)=>`<div class="row${S.open===s.path?" sel":""}${S.focus===i?" focus":""}" data-i="${i}" tabindex="-1">
+     ${s.state==="deleted"?`<span style="width:28px;text-align:center;color:#bdc1c6">🗑</span>`:`<button class="star${s.state==="kept"?" on":""}" data-a="${s.state==="kept"?"unkeep":"keep"}" title="${s.state==="kept"?"Unkeep":"Keep"} (s)">${s.state==="kept"?"★":"☆"}</button>`}
+     <span class="dot" style="background:var(--${s.agent},var(--other))" title="${esc(AG[s.agent]||s.agent)}"></span>
+     <div class="rt"><div class="t">${esc(s.title)}</div><div class="m">${esc(AG[s.agent]||s.agent)} · ${esc(s.project||"")} · ${s.messages} msgs</div></div>
+     <span class="when">${when(s.modified)}</span><div class="hov">${rowActions(s)}</div></div>`).join("");
+  $$("#lbody .row").forEach(el=>{const i=+el.dataset.i;
+    el.onclick=e=>{const a=e.target.closest("[data-a]");if(a){e.stopPropagation();act(a.dataset.a,S.rows[i]);return}S.focus=i;openChat(S.rows[i])};});}
+
+// ---------------- actions (optimistic + undo + rollback)
+const TARGET={keep:"kept",unkeep:"active",delete:"deleted",restore:"active"};
+const MSG={keep:"Chat kept.",unkeep:"Moved back to All.",delete:"Chat moved to Deleted.",restore:"Chat restored to All."};
+async function act(a,s){
+  if(a==="purge")return askPurge(s);
+  const target=TARGET[a];if(!target||s.state===target)return;
+  const prev=s.state,idx=S.rows.indexOf(s),snapCounts={...S.counts},wasOpen=S.open===s.path;
+  // optimistic: remove from current list, adjust counts
+  if(idx>=0){S.rows.splice(idx,1);if(S.focus>=S.rows.length)S.focus=S.rows.length-1}
+  const key=x=>({active:"all",kept:"kept",deleted:"deleted"})[x];
+  S.counts={...S.counts,[key(prev)]:Math.max(0,(S.counts[key(prev)]||0)-1),[key(target)]:(S.counts[key(target)]||0)+1};setCounts(S.counts);renderList();
+  if(wasOpen){const nxt=S.rows[Math.min(idx,S.rows.length-1)];nxt?openChat(nxt):closeView()}
+  try{const r=await post("/api/chat/state",{path:s.path,state:target});setCounts(r.counts);s.state=target;
+      toast(MSG[a],async()=>{await setState(s,prev,target)});}
+  catch(e){ // rollback
+    s.state=prev;if(idx>=0)S.rows.splice(idx,0,s);setCounts(snapCounts);renderList();toast("Couldn't update: "+e.message,null,true);}
+}
+async function setState(s,state,from){try{const r=await post("/api/chat/state",{path:s.path,state});setCounts(r.counts);s.state=state;await loadList(s.path);
+    toast(state===from?"":"Undone.",null)}catch(e){toast("Undo failed: "+e.message,null,true)}}
+let tt;function toast(msg,undo,err){clearTimeout(tt);if(!msg){$("#toast").classList.add("hidden");return}
+  $("#tmsg").textContent=msg;$("#toast").classList.toggle("err",!!err);S.undo=undo||null;$("#tundo").classList.toggle("hidden",!undo);
+  $("#toast").classList.remove("hidden");tt=setTimeout(()=>{$("#toast").classList.add("hidden");S.undo=null},undo?8000:4000);}
+$("#tundo").onclick=()=>{const u=S.undo;S.undo=null;$("#toast").classList.add("hidden");if(u)u()};
+let purgeTarget=null;
+function askPurge(s){purgeTarget=s;$("#purgeTitle").textContent=s.title;$("#purgeModal").classList.remove("hidden")}
+$("#pNo").onclick=()=>{$("#purgeModal").classList.add("hidden");purgeTarget=null};
+$("#pYes").onclick=async()=>{const s=purgeTarget;$("#purgeModal").classList.add("hidden");if(!s)return;
+  try{const r=await post("/api/chat/purge",{path:s.path,confirm:"DELETE"});setCounts(r.counts);if(S.open===s.path)closeView();await loadList();
+    toast("Deleted forever from SuperChat"+(r.drafts_deleted?` (${r.drafts_deleted} draft${r.drafts_deleted>1?"s":""} removed)`:"")+".",null)}catch(e){toast("Couldn't delete: "+e.message,null,true)}};
+
+// ---------------- viewer
+function closeView(){S.open=null;$("#viewp").classList.add("closed");$("#viewp").innerHTML='<div class="empty">Select a chat to read it.<br><br>⭐ Keep it, 🗑️ delete it, or ✨ extract the valuable knowledge from it.</div>';$$("#lbody .row").forEach(x=>x.classList.remove("sel"))}
+async function openChat(s){S.open=s.path;$$("#lbody .row").forEach((x,i)=>{x.classList.toggle("sel",S.rows[i]===s);x.classList.toggle("focus",i===S.focus)});
+  const vp=$("#viewp");vp.classList.remove("closed");vp.innerHTML='<div class="empty"><span class="spin"></span> Opening…</div>';
+  let r;try{r=await get("/api/session?path="+encodeURIComponent(s.path))}catch(e){vp.innerHTML=`<div class="empty">⚠️ ${esc(e.message)}</div>`;return}
+  if(S.open!==s.path)return;s.state=r.state;
+  vp.innerHTML=`<div class="vhead"><button class="ib back" id="vback" title="Back">←</button><span class="dot" style="background:var(--${s.agent},var(--other))"></span><div class="t" title="${esc(s.title)}">${esc(s.title)}</div>
+     <span id="vacts">${rowActions(s)}</span><label style="font-size:12px;color:var(--muted);white-space:nowrap;margin-left:6px"><input type="checkbox" id="showTools"> tool steps</label></div>
+   <div class="vbody" id="vbody"></div><div class="kpanel" id="kpanel"></div>`;
+  $("#vback").onclick=closeView;
+  $$("#vacts [data-a]").forEach(b=>b.onclick=()=>act(b.dataset.a,s));
+  const render=()=>{const show=$("#showTools").checked;$("#vbody").innerHTML=r.messages.filter(m=>show||!m.tool).map(m=>m.tool
+     ?`<div class="bub tool">🔧 ${esc(m.text.replace(/\[Tool: ([^\]]+)\]/g,"$1").slice(0,240))}</div>`
+     :`<div class="bub ${m.role}"><div class="who">${m.role==="user"?"You":esc(AG[s.agent]||"Assistant")}</div>${md(m.text.slice(0,12000))}</div>`).join("")||'<div class="empty">No readable messages.</div>'};
+  $("#showTools").onchange=render;render();renderKPanel(s,r.knowledge);}
+
+function renderKPanel(s,items){const kp=$("#kpanel");if(!kp)return;const cat=(S.state&&S.state.catalog)||{};
+  if(s.state==="deleted"){kp.innerHTML='<div class="info">Restore this chat to extract knowledge from it.</div>';return}
+  kp.innerHTML=`<h4>✨ Valuable knowledge <span style="font-weight:400;color:var(--muted);font-size:12px">Keeping a chat saves nothing to Obsidian. Only knowledge you approve does.</span></h4>
+   <div class="kform"><input id="kClient" list="clients" placeholder="Client (optional now, needed to approve)"><input id="kProduct" list="products" placeholder="Product (optional)">
+     <button class="btn" id="exBtn">${items.length?"↻ Extract again":"✨ Extract valuable knowledge"}</button></div>
+   <datalist id="clients">${Object.keys(cat).map(c=>`<option value="${esc(c)}">`).join("")}</datalist>
+   <datalist id="products">${[...new Set(Object.values(cat).flat())].map(p=>`<option value="${esc(p)}">`).join("")}</datalist>
+   <div id="exMsg"></div><div id="kitems"></div>`;
+  $("#exBtn").onclick=()=>doExtract(s);
+  renderItems(items,$("#kitems"));}
+
+function renderItems(items,box,showSource){
+  box.innerHTML=items.map(k=>card(k,showSource)).join("");
+  items.forEach(k=>{const el=box.querySelector(`[data-k="${k.id}"]`);el.querySelector(".kh").onclick=()=>el.querySelector(".kb2").classList.toggle("hidden");
+    const ap=el.querySelector("[data-x=approve]"),di=el.querySelector("[data-x=discard]"),su=el.querySelector("[data-x=submit]");
+    if(ap)ap.onclick=()=>approve(k,el);if(di)di.onclick=()=>discard(k,el);if(su)su.onclick=()=>submitK(k,el);});}
+function card(k,showSource){const d=k.draft||{},v=d.verification||{},score=k.score??d._score??0,b=d._band||(score>=85?"high":score>=60?"standard":"low");const ed=k.status==="draft";
+  const sim=(d._similar||[]),dup=(d._dup_in_batch||[]);
+  return`<div class="kcard" data-k="${k.id}"><div class="kh"><span class="sc band-${b}">${score}</span><div class="t">${esc(d.title||k.title)}</div>
+     <span class="st st-${k.status}">${k.status}</span><span style="font-size:12px;color:var(--muted)">${esc(CATS[d.category]||d.category||"")}</span></div>
+   <div class="kb2${ed?"":" hidden"}">
+    ${showSource?`<div style="font-size:12px;color:var(--muted)">From: ${esc(k.chat_title||"")} (${esc(AG[k.agent]||k.agent||"")})</div>`:""}
+    ${v.status!=="verified"?`<div class="warn">⚠️ ${v.status==="partially_verified"?"Partially verified":"Not verified"}: it will be labelled that way in Obsidian.</div>`:""}
+    ${sim.length?`<div class="info">Possible duplicate of approved knowledge: ${sim.map(x=>`<b>${esc(x.title)}</b> (${Math.round(x.similarity*100)}% similar)`).join("; ")}. Approving adds a separate note and never overwrites the existing one.</div>`:""}
+    ${dup.length?`<div class="info">Looks very similar to another item from this same chat.</div>`:""}
+    <div class="g2"><div><label>Client</label><input data-f="client" list="clients" value="${esc(k.client||"")}" ${ed?"":"disabled"}></div><div><label>Product</label><input data-f="product" list="products" value="${esc(k.product||"")}" ${ed?"":"disabled"}></div></div>
+    <div><label>Title</label><input data-f="title" value="${esc(d.title)}" ${ed?"":"disabled"}></div>
+    <div class="g2"><div><label>Type</label><select data-f="category" ${ed?"":"disabled"}>${Object.entries(CATS).map(([a,b2])=>`<option value="${a}"${d.category===a?" selected":""}>${b2}</option>`).join("")}</select></div>
+      <div><label>Verification</label><select data-f="vstatus" ${ed?"":"disabled"}>${["verified","partially_verified","unverified"].map(x=>`<option${v.status===x?" selected":""}>${x}</option>`).join("")}</select></div></div>
+    <div><label>Summary</label><textarea data-f="summary" ${ed?"":"disabled"}>${esc(d.summary)}</textarea></div>
+    <div><label>Problem / question</label><textarea data-f="problem" ${ed?"":"disabled"}>${esc(d.problem)}</textarea></div>
+    <div class="g2"><div><label>Root cause</label><textarea data-f="root_cause" ${ed?"":"disabled"}>${esc(d.root_cause)}</textarea></div><div><label>Verification evidence</label><textarea data-f="evidence" ${ed?"":"disabled"}>${esc(v.evidence)}</textarea></div></div>
+    <div><label>Solution / answer</label><textarea data-f="solution" style="min-height:80px" ${ed?"":"disabled"}>${esc(d.solution)}</textarea></div>
+    <div><label>Lessons learned (one per line)</label><textarea data-f="lessons" ${ed?"":"disabled"}>${esc((d.lessons||[]).join("\n"))}</textarea></div>
+    ${(d.errors||[]).length?`<div><label>Error messages</label><div class="ro">${esc(d.errors.join("\n"))}</div></div>`:""}
+    ${(d.attempts||[]).length?`<div><label>What was tried</label><div class="ro">${esc(d.attempts.map(a=>"• "+a.action+" → "+a.result+(a.why_failed?" (failed: "+a.why_failed+")":"")).join("\n"))}</div></div>`:""}
+    ${(d.implementation||[]).length?`<div><label>Commands / code</label><div class="ro">${esc(d.implementation.map(i=>(i.note?i.note+"\n":"")+i.content).join("\n\n"))}</div></div>`:""}
+    ${(d.unresolved||[]).length?`<div><label>Unresolved</label><div class="ro">${esc(d.unresolved.join("\n"))}</div></div>`:""}
+    ${(d.missing_info||[]).length?`<div><label>Missing information</label><div class="ro">${esc(d.missing_info.join("\n"))}</div></div>`:""}
+    <div class="acts" style="justify-content:flex-start;margin-top:4px">
+      ${ed?`<button class="btn ok" data-x="approve">✅ Approve & save to Obsidian</button><button class="btn bad" data-x="discard">Discard</button>`:""}
+      ${k.status==="approved"?`<button class="btn" data-x="submit">📤 Submit for team sharing</button>`:""}
+      ${k.note_path?`<span style="font-size:12px;color:var(--muted);align-self:center">📄 ${esc(k.note_path.split(/[\\/]/).slice(-4).join(" / "))}</span>`:""}
+    </div><div class="kmsg"></div></div></div>`;}
+
+let pendingExtract=null;
+async function doExtract(s){if(!S.state.consent_claude){pendingExtract=s;$("#consentModal").classList.remove("hidden");return}
+  const client=$("#kClient").value.trim(),product=$("#kProduct").value.trim();
+  $("#exMsg").innerHTML='<div class="info" style="margin-top:8px"><span class="spin"></span> Claude is reading this chat and looking for reusable knowledge… (15-90 s)</div>';$("#exBtn").disabled=true;
+  try{const r=await post("/api/extract",{path:s.path,client,product});if(S.open!==s.path)return;
+    $("#exMsg").innerHTML=r.items.length?`<div class="info" style="margin-top:8px">Found ${r.items.length} knowledge item${r.items.length>1?"s":""}. Review, edit and approve the ones worth saving.</div>`
+      :`<div class="warn" style="margin-top:8px">No valuable knowledge found in this chat.${r.skip_reason?" "+esc(r.skip_reason):""}</div>`;
+    renderItems(r.items,$("#kitems"));$("#exBtn").textContent="↻ Extract again";loadState()}
+  catch(e){$("#exMsg").innerHTML=`<div class="warn" style="margin-top:8px">${esc(e.message==="consent_required"?"Please allow Claude extraction first.":e.message)}</div>`}
+  finally{const b=$("#exBtn");if(b)b.disabled=false}}
+$("#cNo").onclick=()=>{$("#consentModal").classList.add("hidden");pendingExtract=null};
+$("#cYes").onclick=async()=>{await post("/api/consent",{value:true});await loadState();$("#consentModal").classList.add("hidden");if(pendingExtract)doExtract(pendingExtract);pendingExtract=null};
+
+function collect(k,el){const f=n=>el.querySelector(`[data-f="${n}"]`).value,lines=n=>f(n).split("\n").map(x=>x.trim()).filter(Boolean);
+  const d={...k.draft,title:f("title").trim(),category:f("category"),summary:f("summary"),problem:f("problem"),root_cause:f("root_cause"),solution:f("solution"),
+    lessons:lines("lessons"),verification:{status:f("vstatus"),evidence:f("evidence")}};return{draft:d,client:f("client").trim(),product:f("product").trim()}}
+async function approve(k,el){const c=collect(k,el);if(!c.client){el.querySelector(".kmsg").innerHTML='<div class="warn">Choose a client first.</div>';el.querySelector('[data-f="client"]').focus();return}
+  el.querySelectorAll("button").forEach(b=>b.disabled=true);
+  try{const r=await post("/api/knowledge/approve",{id:k.id,...c});Object.assign(k,{status:"approved",note_path:r.note_path,score:r.score,client:c.client,product:c.product,draft:c.draft});
+    const tmp=document.createElement("div");tmp.innerHTML=card(k);el.replaceWith(tmp.firstElementChild);renderItemsRebind(k);toast("Saved to Obsidian.",null);loadState()}
+  catch(e){el.querySelector(".kmsg").innerHTML=`<div class="warn">${esc(e.message)}</div>`;el.querySelectorAll("button").forEach(b=>b.disabled=false)}}
+function renderItemsRebind(k){const el=document.querySelector(`[data-k="${k.id}"]`);if(!el)return;el.querySelector(".kh").onclick=()=>el.querySelector(".kb2").classList.toggle("hidden");
+  const su=el.querySelector("[data-x=submit]");if(su)su.onclick=()=>submitK(k,el);}
+async function discard(k,el){try{await post("/api/knowledge/discard",{id:k.id});el.remove();toast("Draft discarded.",null);loadState()}catch(e){toast(e.message,null,true)}}
+async function submitK(k,el){try{const r=await post("/api/knowledge/submit",{id:k.id});k.status="submitted";const tmp=document.createElement("div");tmp.innerHTML=card(k);el.replaceWith(tmp.firstElementChild);renderItemsRebind(k);toast(r.note,null)}catch(e){toast(e.message,null,true)}}
+
+// ---------------- knowledge / search / activity views
+async function loadKnowledge(){$("#lhead").innerHTML='<b>Knowledge</b><span>drafts to review and approved notes</span>';$("#lbody").innerHTML='<div class="empty"><span class="spin"></span></div>';
+  const r=await get("/api/knowledge");$("#lbody").innerHTML=r.items.length?'<div style="padding:4px 12px 12px" id="kall"></div>':'<div class="empty">No knowledge yet.<br>Open a chat and press ✨ Extract valuable knowledge.</div>';
+  if(r.items.length){$("#lbody").insertAdjacentHTML("beforeend",`<datalist id="clients">${Object.keys(S.state.catalog).map(c=>`<option value="${esc(c)}">`).join("")}</datalist>`);renderItems(r.items,$("#kall"),true)}}
+function showSearch(){$("#lhead").innerHTML='<b>Search</b><span>type in the box at the top and press Enter</span>';$("#lbody").innerHTML='<div class="empty">Searches approved knowledge (trusted) and raw chats (evidence).</div>';$("#filter").focus()}
+async function doSearch(){const q=$("#filter").value.trim();if(!q)return;$("#lbody").innerHTML='<div class="empty"><span class="spin"></span></div>';
+  const r=await get("/api/search?q="+encodeURIComponent(q));
+  $("#lbody").innerHTML=`<div class="lhead"><b>📗 Approved knowledge</b><span>trusted</span></div>`+(r.notes.length?r.notes.map(n=>`<div class="sres"><div class="t">${esc(n.title)}</div><div style="font-size:12px;color:var(--muted)">${esc(n.client)}${n.product?" / "+esc(n.product):""} · ${esc(CATS[n.category]||n.category)} · ${n.verification==="verified"?"✅ verified":"⚠️ "+esc(n.verification)}</div><div style="font-size:13px">${esc(n.summary||"")}</div></div>`).join(""):'<div class="empty" style="padding:16px">No approved knowledge matches.</div>')
+   +`<div class="lhead"><b>💬 Chats</b><span>evidence, not reviewed</span></div>`+(r.chats.length?r.chats.map((c,i)=>c.error?`<div class="empty">${esc(c.error)}</div>`:`<div class="sres" data-i="${i}"><div class="t">${esc(c.title)} ${c.state!=="active"?`<span class="st ${c.state==="kept"?"st-approved":"st-draft"}">${c.state}</span>`:""}</div><div style="font-size:12px;color:var(--muted)">${esc(AG[c.agent]||c.agent)} · ${esc(c.project||"")}</div><div style="font-size:12.5px;color:#3c4043">${esc(c.snippet).replace(/\*\*(.+?)\*\*/g,"<mark>$1</mark>")}</div></div>`).join(""):'<div class="empty" style="padding:16px">No chats match.</div>');
+  $$("#lbody .sres[data-i]").forEach(el=>el.onclick=()=>{const c=r.chats[+el.dataset.i];openChat({path:c.path,title:c.title,agent:c.agent,state:c.state,project:c.project})});}
+async function loadActivity(){$("#lhead").innerHTML='<b>Activity</b><span>last 150 actions</span>';const r=await get("/api/audit");
+  $("#lbody").innerHTML=r.audit.map(a=>`<div class="sres" style="cursor:default"><b>${esc(a.action)}</b> · ${esc(a.actor)} · <span style="color:var(--muted)">${new Date(a.ts*1000).toLocaleString("en-IN")}</span><div style="font-size:12px;color:var(--muted);overflow-wrap:anywhere">${esc((a.target||"").split(/[\\/]/).slice(-2).join("/"))}${a.detail?" · "+esc(a.detail):""}</div></div>`).join("")||'<div class="empty">No activity yet.</div>'}
+
+// ---------------- keyboard (Gmail-like)
+document.addEventListener("keydown",e=>{
+  const tg=e.target;if((tg&&tg.matches&&tg.matches("input,textarea,select,[contenteditable]"))||e.ctrlKey||e.metaKey||e.altKey)return;
+  if(!$("#purgeModal").classList.contains("hidden")||!$("#consentModal").classList.contains("hidden")){if(e.key==="Escape"){$("#pNo").click();$("#cNo").click()}return}
+  const list=!!VIEWNAME[S.view],cur=S.rows[S.focus];
+  const mv=d=>{if(!S.rows.length)return;S.focus=Math.max(0,Math.min(S.rows.length-1,(S.focus<0?-1:S.focus)+d));renderList();
+    const el=$(`#lbody .row[data-i="${S.focus}"]`);if(el)el.scrollIntoView({block:"nearest"});if(S.open)openChat(S.rows[S.focus])};
+  if(e.key==="/"){e.preventDefault();$("#filter").focus();return}
+  if(e.key==="z"&&S.undo){e.preventDefault();$("#tundo").click();return}
+  if(e.key==="Escape"){closeView();return}
+  if(!list)return;
+  if(e.key==="j"||e.key==="ArrowDown"){e.preventDefault();mv(1)}
+  else if(e.key==="k"||e.key==="ArrowUp"){e.preventDefault();mv(-1)}
+  else if(e.key==="Enter"&&cur){openChat(cur)}
+  else if(e.key==="s"&&cur&&cur.state!=="deleted"){act(cur.state==="kept"?"unkeep":"keep",cur)}
+  else if((e.key==="#"||e.key==="Delete")&&cur){cur.state==="deleted"?askPurge(cur):act("delete",cur)}
+  else if(e.key==="r"&&cur&&cur.state==="deleted"){act("restore",cur)}
+  else if(e.key==="e"&&cur&&S.open===cur.path&&$("#exBtn")){$("#exBtn").click()}
+});
+
+loadState().then(()=>loadList());
+</script>
+</body>
+</html>

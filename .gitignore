@@ -1,0 +1,18 @@
+# Local data: registry DB, chat metadata cache, backups. Never commit (contains private chat info).
+data/
+*.db
+*.db-wal
+*.db-shm
+sessions_cache.json
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
